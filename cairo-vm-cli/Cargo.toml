@@ -23,3 +23,4 @@ rstest = "0.17.0"
 default = ["with_mimalloc"]
 with_mimalloc = ["cairo-vm/with_mimalloc", "mimalloc"]
 lambdaworks-felt = ["cairo-vm/lambdaworks-felt"]
+extensive_hints = ["cairo-vm/extensive_hints"]
