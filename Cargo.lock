@@ -2451,12 +2451,12 @@ dependencies = [
 [[package]]
 name = "starknet-types-core"
 version = "0.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e17d4e2d7ebcac4825963d890f6f33f78e90071aa6e61ab65222d0fc7702871"
+source = "git+https://github.com/starknet-io/types-rs.git?rev=4bc8a5db3c86f017e8be7dc43531a2cb6db011c0#4bc8a5db3c86f017e8be7dc43531a2cb6db011c0"
 dependencies = [
  "arbitrary",
  "bitvec",
  "lambdaworks-math",
+ "lazy_static",
  "num-bigint",
  "num-integer",
  "num-traits 0.2.17",
