@@ -51,7 +51,7 @@ $(TEST_PROOF_DIR)/%.trace $(TEST_PROOF_DIR)/%.memory $(TEST_PROOF_DIR)/%.air_pub
 	cairo-run --layout starknet_with_keccak --proof_mode --program $< --trace_file $(@D)/$(*F).trace  --air_public_input $(@D)/$(*F).air_public_input --memory_file $(@D)/$(*F).memory
 
 $(PROOF_BENCH_DIR)/%.json: $(PROOF_BENCH_DIR)/%.cairo
-	cairo-compile --cairo_path="$(TEST_PROOF_DIR):$(PROOF_BENCH_DIR)" $< --output $@ --proof_mode
+	cairo-compile --cairo_path="$(TEST_PROOF_DIR):$(PROOF_BENCH_DIR)" $< --output $@
 
 # ======================
 # Run without proof mode
@@ -82,7 +82,7 @@ NORETROCOMPAT_FILES:=$(wildcard $(NORETROCOMPAT_DIR)/*.cairo)
 COMPILED_NORETROCOMPAT_TESTS:=$(patsubst $(NORETROCOMPAT_DIR)/%.cairo, $(NORETROCOMPAT_DIR)/%.json, $(NORETROCOMPAT_FILES))
 
 $(BENCH_DIR)/%.json: $(BENCH_DIR)/%.cairo
-	cairo-compile --cairo_path="$(TEST_DIR):$(BENCH_DIR)" $< --output $@ --proof_mode
+	cairo-compile --cairo_path="$(TEST_DIR):$(BENCH_DIR)" $< --output $@
 
 $(TEST_DIR)/%.json: $(TEST_DIR)/%.cairo
 	cairo-compile --cairo_path="$(TEST_DIR):$(BENCH_DIR)" $< --output $@
