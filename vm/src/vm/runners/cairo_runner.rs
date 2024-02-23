@@ -874,6 +874,9 @@ impl CairoRunner {
                 self.run_for_steps(1, vm, hint_processor)?;
                 self.run_until_next_power_of_2(vm, hint_processor)?;
             }
+            self.run_for_steps(1, vm, hint_processor)?;
+            self.run_until_next_power_of_2(vm, hint_processor)?;
+
         }
 
         self.run_ended = true;
