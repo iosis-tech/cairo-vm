@@ -332,7 +332,7 @@ impl CairoRunner {
         if !program_builtins.is_empty() && !allow_missing_builtins {
             return Err(RunnerError::NoBuiltinForInstance(Box::new((
                 program_builtins.iter().map(|n| n.name()).collect(),
-                self.layout._name.clone(),
+                self.layout.name.clone(),
             ))));
         }
 
@@ -1168,13 +1168,13 @@ impl CairoRunner {
 
         // Out of the memory units available per step, a fraction is used for public memory, and
         // four are used for the instruction.
-        let total_memory_units = instance._memory_units_per_step * vm_current_step_u32;
+        let total_memory_units = instance.memory_units_per_step * vm_current_step_u32;
         let (public_memory_units, rem) =
-            div_rem(total_memory_units, instance._public_memory_fraction);
+            div_rem(total_memory_units, instance.public_memory_fraction);
         if rem != 0 {
             return Err(MathError::SafeDivFailU32(
                 total_memory_units,
-                instance._public_memory_fraction,
+                instance.public_memory_fraction,
             )
             .into());
         }
@@ -1417,7 +1417,7 @@ impl CairoRunner {
         &self,
         vm: &VirtualMachine,
     ) -> Result<PublicInput, PublicInputError> {
-        let layout_name = self.get_layout()._name.as_str();
+        let layout_name = self.get_layout().name.as_str();
         let dyn_layout = match layout_name {
             "dynamic" => Some(self.get_layout()),
             _ => None,
