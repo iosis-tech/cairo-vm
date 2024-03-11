@@ -161,7 +161,7 @@ impl BuiltinRunner {
     }
 
     ///Returns the builtin's base
-    pub fn base(&self) -> usize {
+    pub fn base(&self) -> u64 {
         match *self {
             BuiltinRunner::Bitwise(ref bitwise) => bitwise.base(),
             BuiltinRunner::EcOp(ref ec) => ec.base(),

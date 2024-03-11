@@ -11,8 +11,8 @@ use num_traits::abs;
 
 pub struct RunContext {
     pub(crate) pc: Relocatable,
-    pub(crate) ap: usize,
-    pub(crate) fp: usize,
+    pub(crate) ap: u64,
+    pub(crate) fp: u64,
 }
 
 impl RunContext {
@@ -26,7 +26,7 @@ impl RunContext {
         self.pc
     }
 
-    pub fn new(pc: Relocatable, ap: usize, fp: usize) -> Self {
+    pub fn new(pc: Relocatable, ap: u64, fp: u64) -> Self {
         RunContext { pc, ap, fp }
     }
 
@@ -41,7 +41,7 @@ impl RunContext {
         if instruction.off0 < 0 {
             Ok((base_addr - abs(instruction.off0) as usize)?)
         } else {
-            Ok((base_addr + (instruction.off0 as usize))?)
+            Ok((base_addr + (instruction.off0) as usize)?)
         }
     }
 
@@ -86,12 +86,12 @@ impl RunContext {
     }
 
     #[doc(hidden)]
-    pub(crate) fn set_ap(&mut self, ap: usize) {
+    pub(crate) fn set_ap(&mut self, ap: u64) {
         self.ap = ap;
     }
 
     #[doc(hidden)]
-    pub(crate) fn set_fp(&mut self, fp: usize) {
+    pub(crate) fn set_fp(&mut self, fp: u64) {
         self.fp = fp;
     }
 

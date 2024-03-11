@@ -20,11 +20,11 @@ use super::BITWISE_BUILTIN_NAME;
 #[derive(Debug, Clone)]
 pub struct BitwiseBuiltinRunner {
     ratio: Option<u32>,
-    pub base: usize,
+    pub base: u64,
     pub(crate) cells_per_instance: u32,
     pub(crate) n_input_cells: u32,
     bitwise_builtin: BitwiseInstanceDef,
-    pub(crate) stop_ptr: Option<usize>,
+    pub(crate) stop_ptr: Option<u64>,
     pub(crate) included: bool,
     pub(crate) instances_per_component: u32,
 }
@@ -44,7 +44,7 @@ impl BitwiseBuiltinRunner {
     }
 
     pub fn initialize_segments(&mut self, segments: &mut MemorySegmentManager) {
-        self.base = segments.add().segment_index as usize // segments.add() always returns a positive index
+        self.base = segments.add().segment_index as u64 // segments.add() always returns a positive index
     }
 
     pub fn initial_stack(&self) -> Vec<MaybeRelocatable> {
@@ -55,7 +55,7 @@ impl BitwiseBuiltinRunner {
         }
     }
 
-    pub fn base(&self) -> usize {
+    pub fn base(&self) -> u64 {
         self.base
     }
 
@@ -70,7 +70,7 @@ impl BitwiseBuiltinRunner {
         address: Relocatable,
         memory: &Memory,
     ) -> Result<Option<MaybeRelocatable>, RunnerError> {
-        let index = address.offset % self.cells_per_instance as usize;
+        let index = address.offset % self.cells_per_instance as u64;
         if index <= 1 {
             return Ok(None);
         }
@@ -121,7 +121,7 @@ impl BitwiseBuiltinRunner {
         ))))
     }
 
-    pub fn get_memory_segment_addresses(&self) -> (usize, Option<usize>) {
+    pub fn get_memory_segment_addresses(&self) -> (u64, Option<u64>) {
         (self.base, self.stop_ptr)
     }
 

@@ -130,13 +130,13 @@ impl VirtualMachine {
         instruction: &Instruction,
         operands: &Operands,
     ) -> Result<(), VirtualMachineError> {
-        let new_fp_offset: usize = match instruction.fp_update {
+        let new_fp_offset: u64 = match instruction.fp_update {
             FpUpdate::APPlus2 => self.run_context.ap + 2,
             FpUpdate::Dst => match operands.dst {
                 MaybeRelocatable::RelocatableValue(ref rel) => rel.offset,
                 MaybeRelocatable::Int(ref num) => num
-                    .to_usize()
-                    .ok_or_else(|| MathError::Felt252ToUsizeConversion(Box::new(*num)))?,
+                    .to_u64()
+                    .ok_or_else(|| MathError::Felt252ToU64Conversion(Box::new(*num)))?,
             },
             FpUpdate::Regular => return Ok(()),
         };
@@ -149,7 +149,7 @@ impl VirtualMachine {
         instruction: &Instruction,
         operands: &Operands,
     ) -> Result<(), VirtualMachineError> {
-        let new_apset: usize = match instruction.ap_update {
+        let new_apset: u64 = match instruction.ap_update {
             ApUpdate::Add => match &operands.res {
                 Some(res) => (self.run_context.get_ap() + res)?.offset,
                 None => return Err(VirtualMachineError::UnconstrainedResAdd),
@@ -288,7 +288,7 @@ impl VirtualMachine {
         address: Relocatable,
     ) -> Result<Option<MaybeRelocatable>, VirtualMachineError> {
         for builtin in self.builtin_runners.iter() {
-            if builtin.base() as isize == address.segment_index {
+            if builtin.base() as i64 == address.segment_index {
                 match builtin.deduce_memory_cell(address, &self.segments.memory) {
                     Ok(maybe_reloc) => return Ok(maybe_reloc),
                     Err(error) => return Err(VirtualMachineError::RunnerError(error)),

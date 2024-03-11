@@ -19,8 +19,8 @@ use arbitrary::Arbitrary;
     Eq, Ord, Hash, PartialEq, PartialOrd, Clone, Copy, Debug, Serialize, Deserialize, Default,
 )]
 pub struct Relocatable {
-    pub segment_index: isize,
-    pub offset: usize,
+    pub segment_index: i64,
+    pub offset: u64,
 }
 
 #[cfg_attr(all(feature = "arbitrary", feature = "std"), derive(Arbitrary))]
@@ -44,11 +44,27 @@ impl fmt::Debug for MaybeRelocatable {
     }
 }
 
-impl From<(isize, usize)> for Relocatable {
-    fn from(index_offset: (isize, usize)) -> Self {
+impl From<(i64, u64)> for Relocatable {
+    fn from(index_offset: (i64, u64)) -> Self {
         Relocatable {
             segment_index: index_offset.0,
             offset: index_offset.1,
+        }
+    }
+}
+
+impl From<(i64, u64)> for MaybeRelocatable {
+    fn from(index_offset: (i64, u64)) -> Self {
+        MaybeRelocatable::RelocatableValue(Relocatable::from(index_offset))
+    }
+}
+
+impl From<(isize, usize)> for Relocatable {
+    fn from(index_offset: (isize, usize)) -> Self {
+        Relocatable {
+            // TODO isize to i64 cast
+            segment_index: index_offset.0 as i64,
+            offset: index_offset.1 as u64,
         }
     }
 }
@@ -113,16 +129,25 @@ impl Display for Relocatable {
 impl Add<usize> for Relocatable {
     type Output = Result<Relocatable, MathError>;
     fn add(self, other: usize) -> Result<Self, MathError> {
-        self.offset
-            .checked_add(other)
+        TryInto::<u64>::try_into(other).ok().and_then(|other| self.offset.checked_add(other))
             .map(|x| Relocatable::from((self.segment_index, x)))
             .ok_or_else(|| MathError::RelocatableAddUsizeOffsetExceeded(Box::new((self, other))))
     }
 }
 
-/// Warning: may panic if self.offset + rhs exceeds usize::MAX
-impl AddAssign<usize> for Relocatable {
-    fn add_assign(&mut self, rhs: usize) {
+impl Add<u64> for Relocatable {
+    type Output = Result<Relocatable, MathError>;
+    fn add(self, other: u64) -> Result<Self, MathError> {
+        self.offset
+            .checked_add(other)
+            .map(|x| Relocatable::from((self.segment_index, x)))
+            .ok_or_else(|| MathError::RelocatableAddU64OffsetExceeded(Box::new((self, other))))
+    }
+}
+
+/// Warning: may panic if self.offset + rhs exceeds u64::MAX
+impl AddAssign<u64> for Relocatable {
+    fn add_assign(&mut self, rhs: u64) {
         self.offset += rhs
     }
 }
@@ -131,20 +156,18 @@ impl Add<i32> for Relocatable {
     type Output = Result<Relocatable, MathError>;
     fn add(self, other: i32) -> Result<Self, MathError> {
         if other >= 0 {
-            self + other as usize
+            self + other as u64
         } else {
-            self - other.unsigned_abs() as usize
+            self - other.unsigned_abs() as u64
         }
     }
 }
 impl Add<&Felt252> for Relocatable {
     type Output = Result<Relocatable, MathError>;
     fn add(self, other: &Felt252) -> Result<Relocatable, MathError> {
-        let new_offset = (self.offset as u64 + other)
-            .and_then(|x| x.to_usize())
-            .ok_or_else(|| {
-                MathError::RelocatableAddFelt252OffsetExceeded(Box::new((self, *other)))
-            })?;
+        let new_offset = (self.offset + other).ok_or_else(|| {
+            MathError::RelocatableAddFelt252OffsetExceeded(Box::new((self, *other)))
+        })?;
         Ok((self.segment_index, new_offset).into())
     }
 }
@@ -164,11 +187,26 @@ impl Add<&MaybeRelocatable> for Relocatable {
     }
 }
 
+impl Sub<u64> for Relocatable {
+    type Output = Result<Relocatable, MathError>;
+    fn sub(self, other: u64) -> Result<Self, MathError> {
+        if self.offset < other {
+            return Err(MathError::RelocatableSubU64NegOffset(Box::new((
+                self, other,
+            ))));
+        }
+        let new_offset = self.offset - other;
+        Ok(relocatable!(self.segment_index, new_offset))
+    }
+}
+
 impl Sub<usize> for Relocatable {
     type Output = Result<Relocatable, MathError>;
     fn sub(self, other: usize) -> Result<Self, MathError> {
+        // TODO: usize to u64 conversion
+        let other = other as u64;
         if self.offset < other {
-            return Err(MathError::RelocatableSubUsizeNegOffset(Box::new((
+            return Err(MathError::RelocatableSubU64NegOffset(Box::new((
                 self, other,
             ))));
         }
@@ -178,13 +216,13 @@ impl Sub<usize> for Relocatable {
 }
 
 impl Sub<Relocatable> for Relocatable {
-    type Output = Result<usize, MathError>;
-    fn sub(self, other: Self) -> Result<usize, MathError> {
+    type Output = Result<u64, MathError>;
+    fn sub(self, other: Self) -> Result<u64, MathError> {
         if self.segment_index != other.segment_index {
             return Err(MathError::RelocatableSubDiffIndex(Box::new((self, other))));
         }
         if self.offset < other.offset {
-            return Err(MathError::RelocatableSubUsizeNegOffset(Box::new((
+            return Err(MathError::RelocatableSubU64NegOffset(Box::new((
                 self,
                 other.offset,
             ))));
@@ -226,8 +264,8 @@ impl MaybeRelocatable {
         match *self {
             MaybeRelocatable::Int(ref value) => Ok(MaybeRelocatable::Int(value + other)),
             MaybeRelocatable::RelocatableValue(ref rel) => {
-                let big_offset = other + rel.offset as u64;
-                let new_offset = big_offset.to_usize().ok_or_else(|| {
+                let big_offset = other + rel.offset;
+                let new_offset = big_offset.to_u64().ok_or_else(|| {
                     MathError::RelocatableAddFelt252OffsetExceeded(Box::new((*rel, *other)))
                 })?;
                 Ok(MaybeRelocatable::RelocatableValue(Relocatable {
@@ -238,10 +276,10 @@ impl MaybeRelocatable {
         }
     }
 
-    /// Adds a usize to self
-    pub fn add_usize(&self, other: usize) -> Result<MaybeRelocatable, MathError> {
+    /// Adds a u64 to self
+    pub fn add_u64(&self, other: u64) -> Result<MaybeRelocatable, MathError> {
         Ok(match *self {
-            MaybeRelocatable::Int(ref value) => MaybeRelocatable::Int(value + other as u64),
+            MaybeRelocatable::Int(ref value) => MaybeRelocatable::Int(value + other),
             MaybeRelocatable::RelocatableValue(rel) => (rel + other)?.into(),
         })
     }
@@ -288,11 +326,9 @@ impl MaybeRelocatable {
             (MaybeRelocatable::RelocatableValue(rel_a), MaybeRelocatable::Int(ref num_b)) => {
                 Ok(MaybeRelocatable::from((
                     rel_a.segment_index,
-                    (rel_a.offset as u64 - num_b)
-                        .and_then(|x| x.to_usize())
-                        .ok_or_else(|| {
-                            MathError::RelocatableSubFelt252NegOffset(Box::new((*rel_a, *num_b)))
-                        })?,
+                    (rel_a.offset - num_b).ok_or_else(|| {
+                        MathError::RelocatableSubFelt252NegOffset(Box::new((*rel_a, *num_b)))
+                    })?,
                 )))
             }
             (MaybeRelocatable::Int(int), MaybeRelocatable::RelocatableValue(rel)) => {
@@ -348,10 +384,10 @@ impl MaybeRelocatable {
     }
 }
 
-impl<'a> Add<usize> for &'a Relocatable {
+impl<'a> Add<u64> for &'a Relocatable {
     type Output = Relocatable;
 
-    fn add(self, other: usize) -> Self::Output {
+    fn add(self, other: u64) -> Self::Output {
         Relocatable {
             segment_index: self.segment_index,
             offset: self.offset + other,
@@ -379,8 +415,9 @@ pub fn relocate_value(
 pub fn relocate_address(
     relocatable: Relocatable,
     relocation_table: &Vec<usize>,
-) -> Result<usize, MemoryError> {
+) -> Result<u64, MemoryError> {
     let (segment_index, offset) = if relocatable.segment_index >= 0 {
+        // TODO: u64 to usize cast
         (relocatable.segment_index as usize, relocatable.offset)
     } else {
         return Err(MemoryError::TemporarySegmentInRelocation(
@@ -392,7 +429,7 @@ pub fn relocate_address(
         return Err(MemoryError::Relocation);
     }
 
-    Ok(relocation_table[segment_index] + offset)
+    Ok(relocation_table[segment_index] as u64 + offset)
 }
 
 #[cfg(test)]
@@ -449,9 +486,9 @@ mod tests {
 
     #[test]
     #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
-    fn add_usize_to_int() {
+    fn add_u64_to_int() {
         let addr = MaybeRelocatable::from(Felt252::from(7_i32));
-        let added_addr = addr.add_usize(2).unwrap();
+        let added_addr = addr.add_u64(2).unwrap();
         assert_eq!(MaybeRelocatable::Int(Felt252::from(9)), added_addr);
     }
 
@@ -472,7 +509,7 @@ mod tests {
     #[test]
     #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
     fn add_int_mod_offset_exceeded() {
-        let addr = MaybeRelocatable::from((0, 0));
+        let addr = MaybeRelocatable::from((0_i64, 0_u64));
         let error = addr.add_int(&felt_hex!("0x10000000000000000"));
         assert_eq!(
             error,
@@ -485,9 +522,9 @@ mod tests {
 
     #[test]
     #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
-    fn add_usize_to_relocatable() {
+    fn add_u64_to_relocatable() {
         let addr = MaybeRelocatable::RelocatableValue(relocatable!(7, 65));
-        let added_addr = addr.add_usize(2);
+        let added_addr = addr.add_u64(2);
         assert_eq!(
             added_addr,
             Ok(MaybeRelocatable::RelocatableValue(Relocatable {

@@ -35,11 +35,13 @@ pub enum MathError {
     #[error("Operation failed: {} - {}, offsets cant be negative", (*.0).0, (*.0).1)]
     RelocatableSubFelt252NegOffset(Box<(Relocatable, Felt252)>),
     #[error("Operation failed: {} - {}, offsets cant be negative", (*.0).0, (*.0).1)]
-    RelocatableSubUsizeNegOffset(Box<(Relocatable, usize)>),
+    RelocatableSubU64NegOffset(Box<(Relocatable, u64)>),
     #[error("Operation failed: {} + {}, maximum offset value exceeded", (*.0).0, (*.0).1)]
     RelocatableAddFelt252OffsetExceeded(Box<(Relocatable, Felt252)>),
     #[error("Operation failed: {} + {}, maximum offset value exceeded", (*.0).0, (*.0).1)]
     RelocatableAddUsizeOffsetExceeded(Box<(Relocatable, usize)>),
+    #[error("Operation failed: {} + {}, maximum offset value exceeded", (*.0).0, (*.0).1)]
+    RelocatableAddU64OffsetExceeded(Box<(Relocatable, u64)>),
     #[error("Operation failed: {} + {}, can't add two relocatable values", (*.0).0, (*.0).1)]
     RelocatableAdd(Box<(Relocatable, Relocatable)>),
     #[error("Operation failed: {} - {}, can't subtract two relocatable values with different segment indexes", (*.0).0, (*.0).1)]

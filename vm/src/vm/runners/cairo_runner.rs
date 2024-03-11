@@ -433,7 +433,7 @@ impl CairoRunner {
     fn initialize_state(
         &mut self,
         vm: &mut VirtualMachine,
-        entrypoint: usize,
+        entrypoint: u64,
         stack: Vec<MaybeRelocatable>,
     ) -> Result<(), RunnerError> {
         if let Some(prog_base) = self.program_base {
@@ -466,7 +466,7 @@ impl CairoRunner {
     pub fn initialize_function_entrypoint(
         &mut self,
         vm: &mut VirtualMachine,
-        entrypoint: usize,
+        entrypoint: u64,
         mut stack: Vec<MaybeRelocatable>,
         return_fp: MaybeRelocatable,
     ) -> Result<Relocatable, RunnerError> {
@@ -478,7 +478,8 @@ impl CairoRunner {
         if let Some(base) = &self.execution_base {
             self.initial_fp = Some(Relocatable {
                 segment_index: base.segment_index,
-                offset: base.offset + stack.len(),
+                // TODO: Conversion of usize to u64
+                offset: base.offset + stack.len() as u64,
             });
             self.initial_ap = self.initial_fp;
         } else {

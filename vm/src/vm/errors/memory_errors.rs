@@ -33,11 +33,11 @@ pub enum MemoryError {
     #[error("Could not cast arguments")]
     WriteArg,
     #[error("Memory addresses mustn't be in a TemporarySegment, segment: {0}")]
-    AddressInTemporarySegment(isize),
+    AddressInTemporarySegment(i64),
     #[error("Memory addresses must be in a TemporarySegment, segment: {0}")]
     AddressNotInTemporarySegment(isize),
     #[error("Temporary segment found while relocating (flattening), segment: {0}")]
-    TemporarySegmentInRelocation(isize),
+    TemporarySegmentInRelocation(i64),
     #[error("The TemporarySegment: {0} doesn't have a relocation address")]
     NonZeroOffset(usize),
     #[error("Attempt to overwrite a relocation rule, segment: {0}")]

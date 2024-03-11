@@ -13,23 +13,23 @@ pub mod trace_entry {
     #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
     pub struct TraceEntry {
         pub pc: Relocatable,
-        pub ap: usize,
-        pub fp: usize,
+        pub ap: u64,
+        pub fp: u64,
     }
 
     /// A trace entry for every instruction that was executed.
     /// Holds the register values before the instruction was executed, after going through the relocation process
     #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
     pub struct RelocatedTraceEntry {
-        pub pc: usize,
-        pub ap: usize,
-        pub fp: usize,
+        pub pc: u64,
+        pub ap: u64,
+        pub fp: u64,
     }
 
     pub fn relocate_trace_register(
         value: Relocatable,
         relocation_table: &Vec<usize>,
-    ) -> Result<usize, TraceError> {
+    ) -> Result<u64, TraceError> {
         let segment_index: usize = value.segment_index.try_into().map_err(|_| {
             TraceError::MemoryError(MemoryError::AddressInTemporarySegment(value.segment_index))
         })?;
@@ -37,6 +37,7 @@ pub mod trace_entry {
         if relocation_table.len() <= segment_index {
             return Err(TraceError::NoRelocationFound);
         }
-        Ok(relocation_table[segment_index] + value.offset)
+        // TODO: usize to u64 conversion
+        Ok(relocation_table[segment_index] as u64 + value.offset)
     }
 }
