@@ -148,7 +148,7 @@ pub struct CairoRunner {
     final_pc: Option<Relocatable>,
     pub program_base: Option<Relocatable>,
     execution_base: Option<Relocatable>,
-    entrypoint: Option<usize>,
+    entrypoint: Option<u64>,
     initial_ap: Option<Relocatable>,
     initial_fp: Option<Relocatable>,
     initial_pc: Option<Relocatable>,

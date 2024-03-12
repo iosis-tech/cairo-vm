@@ -36,7 +36,7 @@ impl MemorySegmentManager {
     pub fn add(&mut self) -> Relocatable {
         self.memory.data.push(Vec::new());
         Relocatable {
-            segment_index: (self.memory.data.len() - 1) as isize,
+            segment_index: (self.memory.data.len() - 1) as i64,
             offset: 0,
         }
     }
@@ -46,7 +46,7 @@ impl MemorySegmentManager {
         self.memory.temp_data.push(Vec::new());
         Relocatable {
             // We dont substract 1 as we need to take into account the index shift (temporary memory begins from -1 instead of 0)
-            segment_index: -((self.memory.temp_data.len()) as isize),
+            segment_index: -((self.memory.temp_data.len()) as i64),
             offset: 0,
         }
     }

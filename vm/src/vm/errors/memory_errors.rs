@@ -35,13 +35,13 @@ pub enum MemoryError {
     #[error("Memory addresses mustn't be in a TemporarySegment, segment: {0}")]
     AddressInTemporarySegment(i64),
     #[error("Memory addresses must be in a TemporarySegment, segment: {0}")]
-    AddressNotInTemporarySegment(isize),
+    AddressNotInTemporarySegment(i64),
     #[error("Temporary segment found while relocating (flattening), segment: {0}")]
     TemporarySegmentInRelocation(i64),
     #[error("The TemporarySegment: {0} doesn't have a relocation address")]
-    NonZeroOffset(usize),
+    NonZeroOffset(u64),
     #[error("Attempt to overwrite a relocation rule, segment: {0}")]
-    DuplicatedRelocation(isize),
+    DuplicatedRelocation(i64),
     #[error("Segment effective sizes haven't been calculated.")]
     MissingSegmentUsedSizes,
     #[error("Found a memory gap when calling get_continuous_range with base:{} and size: {}", (*.0).0, (*.0).1)]
@@ -100,6 +100,8 @@ pub enum MemoryError {
     UnrelocatedMemory,
     #[error("Malformed public memory")]
     MalformedPublicMemory,
+    #[error("Out of Memory")]
+    OutOfMemory
 }
 
 #[derive(Debug, PartialEq, Eq, Error)]
