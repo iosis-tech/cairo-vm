@@ -24,6 +24,7 @@ use cairo_lang_sierra_to_casm::{
     compiler::CairoProgram,
     metadata::{calc_metadata, Metadata, MetadataComputationConfig, MetadataError},
 };
+use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_type_size::get_type_size_map;
 use cairo_lang_utils::{casts::IntoOrPanic, unordered_hash_map::UnorderedHashMap};
 use cairo_vm::{
