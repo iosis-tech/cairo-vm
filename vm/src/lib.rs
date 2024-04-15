@@ -53,6 +53,7 @@ pub mod stdlib {
 
 pub mod air_private_input;
 pub mod air_public_input;
+pub mod cairo1_run;
 pub mod cairo_run;
 pub mod hint_processor;
 pub mod math_utils;

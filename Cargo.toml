@@ -6,13 +6,9 @@ members = [
     "examples/wasm-demo",
     "cairo1-run",
     "cairo-vm-tracer",
-    "examples/hyper_threading"
+    "examples/hyper_threading",
 ]
-default-members = [
-    "cairo-vm-cli",
-    "vm",
-    "cairo1-run",
-]
+default-members = ["cairo-vm-cli", "vm", "cairo1-run"]
 exclude = ["ensure-no_std"]
 
 # Explicitly set the resolver to the default for edition >= 2021
