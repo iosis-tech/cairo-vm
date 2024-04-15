@@ -1,20 +1,10 @@
 use bincode::enc::write::Writer;
+use cairo1_run::{Error, FuncArg, FuncArgs};
 use cairo_lang_compiler::{
     compile_prepared_db, db::RootDatabase, project::setup_project, CompilerConfig,
 };
-use cairo_lang_sierra::{ids::ConcreteTypeId, program_registry::ProgramRegistryError};
-use cairo_lang_sierra_to_casm::{compiler::CompilationError, metadata::MetadataError};
 use cairo_run::Cairo1RunConfig;
-use cairo_vm::{
-    air_public_input::PublicInputError,
-    cairo_run::EncodeTraceError,
-    types::errors::program_errors::ProgramError,
-    vm::errors::{
-        memory_errors::MemoryError, runner_errors::RunnerError, trace_errors::TraceError,
-        vm_errors::VirtualMachineError,
-    },
-    Felt252,
-};
+use cairo_vm::{air_public_input::PublicInputError, vm::errors::trace_errors::TraceError, Felt252};
 use clap::{Parser, ValueHint};
 use itertools::Itertools;
 use std::{
@@ -67,15 +57,6 @@ struct Args {
     append_return_values: bool,
 }
 
-#[derive(Debug, Clone)]
-pub enum FuncArg {
-    Array(Vec<Felt252>),
-    Single(Felt252),
-}
-
-#[derive(Debug, Clone, Default)]
-struct FuncArgs(Vec<FuncArg>);
-
 fn process_args(value: &str) -> Result<FuncArgs, String> {
     if value.is_empty() {
         return Ok(FuncArgs::default());
@@ -124,55 +105,6 @@ fn validate_layout(value: &str) -> Result<String, String> {
         | "dynamic" => Ok(value.to_string()),
         _ => Err(format!("{value} is not a valid layout")),
     }
-}
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("Invalid arguments")]
-    Cli(#[from] clap::Error),
-    #[error("Failed to interact with the file system")]
-    IO(#[from] std::io::Error),
-    #[error(transparent)]
-    EncodeTrace(#[from] EncodeTraceError),
-    #[error(transparent)]
-    VirtualMachine(#[from] VirtualMachineError),
-    #[error(transparent)]
-    Trace(#[from] TraceError),
-    #[error(transparent)]
-    PublicInput(#[from] PublicInputError),
-    #[error(transparent)]
-    Runner(#[from] RunnerError),
-    #[error(transparent)]
-    ProgramRegistry(#[from] Box<ProgramRegistryError>),
-    #[error(transparent)]
-    Compilation(#[from] Box<CompilationError>),
-    #[error("Failed to compile to sierra:\n {0}")]
-    SierraCompilation(String),
-    #[error(transparent)]
-    Metadata(#[from] MetadataError),
-    #[error(transparent)]
-    Program(#[from] ProgramError),
-    #[error(transparent)]
-    Memory(#[from] MemoryError),
-    #[error("Program panicked with {0:?}")]
-    RunPanic(Vec<Felt252>),
-    #[error("Function signature has no return types")]
-    NoRetTypesInSignature,
-    #[error("No size for concrete type id: {0}")]
-    NoTypeSizeForId(ConcreteTypeId),
-    #[error("Concrete type id has no debug name: {0}")]
-    TypeIdNoDebugName(ConcreteTypeId),
-    #[error("No info in sierra program registry for concrete type id: {0}")]
-    NoInfoForType(ConcreteTypeId),
-    #[error("Failed to extract return values from VM")]
-    FailedToExtractReturnValues,
-    #[error("Function expects arguments of size {expected} and received {actual} instead.")]
-    ArgumentsSizeMismatch { expected: i16, actual: i16 },
-    #[error("Function param {param_index} only partially contains argument {arg_index}.")]
-    ArgumentUnaligned {
-        param_index: usize,
-        arg_index: usize,
-    },
 }
 
 pub struct FileWriter {
